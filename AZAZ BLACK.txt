@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Percobaan Azaz Black - WebAR</title>
+
+  <!-- A-Frame & AR.js -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://unpkg.com/ar.js@3.3.2/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 100vh;
+    }
+    .lkpd {
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .result-box {
+      background: #f3f3f3;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .btn {
+      padding: 6px 12px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-green { background: #16a34a; color: white; }
+    .btn-red { background: #dc2626; color: white; }
+    .ar-container {
+      position: relative;
+    }
+    .ar-view {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Bagian LKPD -->
+  <div class="lkpd">
+    <h2>LKPD — Percobaan Azaz Black</h2>
+    <p><b>Tujuan:</b> Menentukan suhu campuran dari dua zat cair.</p>
+
+    <h3>Zat Cair 1 (Suhu Tinggi)</h3>
+    <label>Massa (g): <input type="number" id="m1" value="100"></label><br>
+    <label>Suhu (°C): <input type="number" id="t1" value="80"></label><br>
+    <label>Kalor Jenis (J/g°C): <input type="number" id="c1" value="4.18" step="0.01"></label><br>
+
+    <h3>Zat Cair 2 (Suhu Rendah)</h3>
+    <label>Massa (g): <input type="number" id="m2" value="100"></label><br>
+    <label>Suhu (°C): <input type="number" id="t2" value="20"></label><br>
+    <label>Kalor Jenis (J/g°C): <input type="number" id="c2" value="4.18" step="0.01"></label><br>
+
+    <button class="btn btn-green" onclick="hitungCampuran()">Hitung & Tampilkan AR</button>
+    <button class="btn btn-red" onclick="resetAR()">Reset</button>
+
+    <div class="result-box">
+      <h4>Hasil:</h4>
+      <p id="hasil">Belum dihitung</p>
+      <small>Rumus: Tmix = (m₁c₁T₁ + m₂c₂T₂) / (m₁c₁ + m₂c₂)</small>
+    </div>
+  </div>
+
+  <!-- Bagian WebAR -->
+  <div class="ar-container">
+    <a-scene embedded arjs="trackingMethod: best; sourceType: webcam;" class="ar-view">
+      <a-marker preset="hiro" id="marker">
+        <!-- bola zat cair ditambahkan via JS -->
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>
+  </div>
+
+  <script>
+    function suhuToColor(t) {
+      // Map suhu 0-100 ke warna biru -> merah
+      let ratio = Math.max(0, Math.min(100, t)) / 100;
+      let r = Math.round(255 * ratio);
+      let b = Math.round(255 * (1 - ratio));
+      let g = Math.round(120 * (1 - Math.abs(0.5 - ratio) * 2));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function hitungCampuran() {
+      let m1 = parseFloat(document.getElementById("m1").value);
+      let t1 = parseFloat(document.getElementById("t1").value);
+      let c1 = parseFloat(document.getElementById("c1").value);
+
+      let m2 = parseFloat(document.getElementById("m2").value);
+      let t2 = parseFloat(document.getElementById("t2").value);
+      let c2 = parseFloat(document.getElementById("c2").value);
+
+      let Tmix = (m1*c1*t1 + m2*c2*t2) / (m1*c1 + m2*c2);
+      document.getElementById("hasil").innerText = Tmix.toFixed(2) + " °C";
+
+      // Tambahkan objek AR
+      let marker = document.getElementById("marker");
+      marker.innerHTML = `
+        <a-sphere position='-0.4 0.15 0' radius='0.1' color='${suhuToColor(t1)}'></a-sphere>
+        <a-text value='Zat1: ${t1}°C' position='-0.8 0.4 0' scale='0.5 0.5 0.5'></a-text>
+        <a-sphere position='0.4 0.15 0' radius='0.1' color='${suhuToColor(t2)}'></a-sphere>
+        <a-text value='Zat2: ${t2}°C' position='0.1 0.4 0' scale='0.5 0.5 0.5'></a-text>
+        <a-sphere position='0 0.15 0' radius='0.12' color='${suhuToColor(Tmix)}'></a-sphere>
+        <a-text value='T campuran: ${Tmix.toFixed(2)}°C' position='-0.6 0.7 0' scale='0.6 0.6 0.6'></a-text>
+      `;
+    }
+
+    function resetAR() {
+      document.getElementById("hasil").innerText = "Belum dihitung";
+      document.getElementById("marker").innerHTML = "";
+    }
+  </script>
+</body>
+</html>
